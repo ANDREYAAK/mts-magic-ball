@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Финансовый шарик — МТС Деньги</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔮</text></svg>">
+<style>
+  @font-face { font-family: 'MTS Compact'; font-weight: 400; font-display: swap;
+    src: url('assets/fonts/MTSCompact-400.woff2') format('woff2'); }
+  @font-face { font-family: 'MTS Compact'; font-weight: 500; font-display: swap;
+    src: url('assets/fonts/MTSCompact-500.woff2') format('woff2'); }
+  @font-face { font-family: 'MTS Compact'; font-weight: 700; font-display: swap;
+    src: url('assets/fonts/MTSCompact-700.woff2') format('woff2'); }
+  @font-face { font-family: 'MTS Wide'; font-weight: 700; font-display: swap;
+    src: url('assets/fonts/MTSWide-700.woff2') format('woff2'); }
+
+  :root {
+    --mts-red: #E2060F;
+    --ink: #FFFFFF;
+    --ink-dim: rgba(255,255,255,.56);
+    --pill: rgba(255,255,255,.10);
+    --pill-line: rgba(255,255,255,.14);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'MTS Compact', system-ui, sans-serif;
+    color: var(--ink);
+    background: #120E2B;
+    overflow: hidden;
+  }
+  #stage {
+    position: relative; height: 100dvh; margin: 0 auto;
+    max-width: 520px; display: flex; flex-direction: column;
+    background:
+      radial-gradient(120% 55% at 50% -6%, #4A3A8F 0%, rgba(74,58,143,0) 60%),
+      radial-gradient(130% 70% at 50% 108%, #2C2064 0%, rgba(44,32,100,0) 62%),
+      linear-gradient(180deg, #1A1440 0%, #151034 52%, #120E2B 100%);
+  }
+  /* звёздная пыль */
+  .dust { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+  .dust i {
+    position: absolute; display: block; width: 3px; height: 3px; border-radius: 50%;
+    background: #CFC6FF; opacity: 0;
+    animation: tw 4.2s ease-in-out infinite;
+  }
+  @keyframes tw {
+    0%, 100% { opacity: 0; transform: translateY(0) scale(.6); }
+    45% { opacity: .85; transform: translateY(-7px) scale(1); }
+  }
+
+  header {
+    position: relative; z-index: 5;
+    padding: calc(14px + env(safe-area-inset-top)) 20px 0;
+    display: flex; align-items: center; justify-content: flex-end;
+  }
+  .close {
+    width: 34px; height: 34px; border-radius: 50%; border: 0; cursor: pointer;
+    background: rgba(255,255,255,.10); color: var(--ink-dim); font-size: 15px;
+  }
+
+  #ballWrap { position: relative; flex: 1; min-height: 0; z-index: 2; }
+  #ballWrap canvas { display: block; width: 100%; height: 100%; cursor: pointer; }
+
+  /* статус над шаром */
+  #status {
+    position: absolute; left: 0; right: 0; top: 6%;
+    text-align: center; pointer-events: none; z-index: 4;
+    opacity: 0; transform: translateY(6px); transition: opacity .45s, transform .45s;
+  }
+  #status.show { opacity: 1; transform: none; }
+  #status .cap { font: 400 13px/1.3 'MTS Compact'; color: var(--ink-dim); letter-spacing: .04em; }
+  #status .cap.big {
+    font: 700 clamp(20px, 5.6vw, 24px)/1.2 'MTS Wide'; color: #fff; letter-spacing: .01em;
+    text-shadow: 0 4px 34px rgba(150,128,255,.55);
+  }
+
+  footer {
+    position: relative; z-index: 5;
+    padding: 0 16px calc(16px + env(safe-area-inset-bottom));
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .punch {
+    font: 700 clamp(21px, 6vw, 26px)/1.18 'MTS Wide';
+    letter-spacing: .01em; padding: 0 6px;
+  }
+  .punch em { font-style: normal; color: #B7A9FF; }
+  .chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 0 2px; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip {
+    flex: 0 0 auto; border: 1px solid var(--pill-line); background: var(--pill);
+    color: var(--ink); border-radius: 100px; padding: 9px 14px;
+    font: 500 13.5px/1 'MTS Compact'; cursor: pointer; backdrop-filter: blur(6px);
+  }
+  .ask {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,.985); border-radius: 20px; padding: 7px 7px 7px 18px;
+    box-shadow: 0 14px 40px rgba(6,4,26,.45);
+  }
+  .ask input {
+    flex: 1; border: 0; outline: 0; background: transparent;
+    font: 500 15.5px/1.2 'MTS Compact'; color: #1A1A24; min-width: 0;
+  }
+  .ask input::placeholder { color: #9A97AC; }
+  /* Кнопка в языке МТС: скруглённый квадрат («сквиркл»), фирменный красный, белая иконка */
+  .ask button {
+    width: 46px; height: 46px; border-radius: 14px; border: 0; cursor: pointer;
+    background: linear-gradient(180deg, #FF2A33 0%, var(--mts-red) 58%, #C40510 100%);
+    color: #fff; display: grid; place-items: center;
+    box-shadow: 0 6px 16px rgba(226,6,15,.42), inset 0 1px 0 rgba(255,255,255,.28);
+    transition: transform .15s, box-shadow .2s, opacity .2s;
+  }
+  .ask button svg { width: 20px; height: 20px; display: block; }
+  .ask button:hover { box-shadow: 0 8px 22px rgba(226,6,15,.55), inset 0 1px 0 rgba(255,255,255,.3); }
+  .ask button:active { transform: scale(.94); }
+  .ask button:disabled { opacity: .45; box-shadow: none; }
+
+  #hint {
+    position: absolute; left: 0; right: 0; bottom: 27%;
+    text-align: center; pointer-events: none; z-index: 4;
+    font: 400 12.5px/1.3 'MTS Compact'; color: rgba(255,255,255,.38);
+    opacity: 1; transition: opacity .5s;
+  }
+  #hint.hide { opacity: 0; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="dust" id="dust"></div>
+  <header>
+    <button class="close" aria-label="Закрыть">✕</button>
+  </header>
+
+  <div id="ballWrap">
+    <div id="status"><div class="cap" id="statusText">шар думает…</div></div>
+  </div>
+  <div id="hint">нажми на шар или задай вопрос</div>
+
+  <footer>
+    <div class="punch">Спроси про деньги — <em>шар уже знает</em></div>
+    <div class="chips" id="chips">
+      <button class="chip">Стоит ли инвестировать?</button>
+      <button class="chip">Брать ли кредит?</button>
+      <button class="chip">Ждать ли премию?</button>
+      <button class="chip">Пора ли копить?</button>
+    </div>
+    <form class="ask" id="askForm">
+      <input id="q" type="text" placeholder="Твой вопрос шару…" autocomplete="off" maxlength="120">
+      <button type="submit" id="sendBtn" aria-label="Спросить">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 19V5"/><path d="M5 12l7-7 7 7"/>
+        </svg>
+      </button>
+    </form>
+  </footer>
+</div>
+
+<script type="importmap">
+{ "imports": {
+    "three": "./assets/three.module.js",
+    "three/addons/": "./assets/three-addons/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+/* ================= данные ================= */
+const ASSET_V = 'v8';   // поднимать при пересборке модели, иначе браузер отдаст старый GLB
+const manifest = await (await fetch(`assets/ball_manifest.json?${ASSET_V}`,
+                                    { cache: 'no-store' })).json();
+
+/* Текст ответа — ПЕРЕМЕННАЯ.
+   Сейчас: случайный позитивный ответ из ТЗ (manifest.answers).
+   Для боевого API замените тело функции, например:
+     const r = await fetch('/api/ball-answer', {method:'POST', body: JSON.stringify({question})});
+     return (await r.json()).answer;                                        */
+async function pickAnswer(question) {
+  const list = manifest.answers;
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+/* ================= сцена ================= */
+const wrap = document.getElementById('ballWrap');
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.toneMapping = THREE.NeutralToneMapping ?? THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.12;
+wrap.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 50);
+const CAM_Y = 2.42, CAM_Z = 5.95;     // взгляд сверху — экран раскрыт, а не сплюснут
+camera.position.set(0, CAM_Y, CAM_Z);
+camera.lookAt(0, 0.14, 0);
+
+// студийное окружение как в Cycles-сцене: софтбоксы → чистые прямоугольные блики
+function buildStudioEnv() {
+  const s = new THREE.Scene();
+  s.background = new THREE.Color(0x07060f);
+  const box = (w, h, pos, rot, c) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h),
+      new THREE.MeshBasicMaterial({ color: c, side: THREE.DoubleSide }));
+    m.position.set(...pos); m.rotation.set(...rot); s.add(m);
+  };
+  box(6, 3.5, [-3.5, 5, 5], [-Math.PI / 4, -Math.PI / 6, 0], new THREE.Color(7, 7, 7.4));   // key
+  box(3, 0.5, [-1.6, 6.5, 3.2], [-Math.PI / 2.6, 0, 0], new THREE.Color(6, 6, 6.6));         // верхний штрих на стекле
+  box(3, 2.2, [5, 1.2, 4], [0, Math.PI / 5, 0], new THREE.Color(1.15, 1.15, 1.5));           // fill
+  box(5, 3, [1.5, 4, -5.5], [Math.PI / 6, Math.PI, 0], new THREE.Color(6, 5.5, 7.5));        // rim
+  box(8, 4, [0, -5, 2], [Math.PI / 2.2, 0, 0], new THREE.Color(0.65, 0.5, 1.35));            // фиолетовый отскок
+  return s;
+}
+const pmrem = new THREE.PMREMGenerator(renderer);
+// размытие среды — иначе прямоугольные софтбоксы отражаются в линзе резкими пятнами
+scene.environment = pmrem.fromScene(buildStudioEnv(), 0.22).texture;
+
+const key = new THREE.DirectionalLight(0xffffff, 2.1); key.position.set(-2.4, 2.6, 2.2); scene.add(key);
+const fill = new THREE.DirectionalLight(0xcfd4ff, 0.4); fill.position.set(2.6, 0.4, 2.4); scene.add(fill);
+const rim = new THREE.DirectionalLight(0xb9a6ff, 1.0); rim.position.set(0.6, 2.2, -2.6); scene.add(rim);
+scene.add(new THREE.HemisphereLight(0x8a7ddf, 0x191340, 0.4));
+
+const ballGroup = new THREE.Group();
+scene.add(ballGroup);
+
+// мягкое свечение-подложка под шаром
+const glowCnv = document.createElement('canvas'); glowCnv.width = glowCnv.height = 256;
+{ const g = glowCnv.getContext('2d');
+  const gr = g.createRadialGradient(128,128,10,128,128,128);
+  gr.addColorStop(0,'rgba(122,98,220,.55)'); gr.addColorStop(.55,'rgba(90,70,190,.18)');
+  gr.addColorStop(1,'rgba(80,60,180,0)');
+  g.fillStyle = gr; g.fillRect(0,0,256,256); }
+const glow = new THREE.Sprite(new THREE.SpriteMaterial({
+  map: new THREE.CanvasTexture(glowCnv), transparent: true, depthWrite: false }));
+glow.scale.set(3.6, 1.25, 1); glow.position.y = -1.62;
+scene.add(glow);
+
+/* ------------- загрузка шара ------------- */
+const gltf = await new GLTFLoader().loadAsync(`assets/ball.glb?${ASSET_V}`);
+const ball = gltf.scene;
+ballGroup.add(ball);
+// боковая кнопка с продуктового фото в веб-версии читается как лишний круг — прячем
+const btn = ball.getObjectByName('ButtonRig');
+if (btn) btn.visible = false;
+
+let die, windowRig, dieMat, dieBase, glassMesh;
+ball.traverse(o => {
+  if (o.name === 'Die') die = o;
+  if (o.name === 'WindowRig') windowRig = o;
+  if (o.isMesh) {
+    if (o.material?.name === 'mts_glass') {
+      // Стекло держим на альфе, а не на transmission: transmission-pass подмешивает
+      // светлое окружение и «выбеливает» тёмную глубину окна вместе с текстом.
+      // Ощущение линзы даёт форма из Blender (plano-convex) + блики и clearcoat.
+      o.material = new THREE.MeshPhysicalMaterial({
+        color: 0x8fa0ff, transparent: true, opacity: 0.06,
+        roughness: 0.06, metalness: 0, clearcoat: 0.3, clearcoatRoughness: 0.08,
+        specularIntensity: 0.35, envMapIntensity: 0.12,
+        depthWrite: false, side: THREE.FrontSide,
+      });
+      o.renderOrder = 30;
+      glassMesh = o;
+    }
+    // корпус только FrontSide: с DoubleSide через окно видна светлая изнанка сферы
+    if (o.material?.name === 'mts_violet') o.material.envMapIntensity = 1.15;
+    // «Стакан» из модели в вебе только подсвечивает окно (в Blender его гасила объёмная
+    // жидкость, которой здесь нет). Вместо него — тёмная полость, см. ниже.
+    if (o.material?.name === 'mts_cup') o.visible = false;
+    if (o.material?.name === 'mts_die') {
+      o.material.transparent = false;
+      o.material.roughness = 0.45;
+      dieMat = o.material;
+      dieBase = o.material.color.clone().multiplyScalar(0.72);   // глубже, «в темноте»
+    }
+  }
+});
+
+/* ------------- фиолетовый треугольник с ответом (как в настоящем шаре) ------------- */
+const TRI_W = 1024, TRI_H = 900;
+const txtCnv = document.createElement('canvas'); txtCnv.width = TRI_W; txtCnv.height = TRI_H;
+const txtTex = new THREE.CanvasTexture(txtCnv);
+txtTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+
+function drawAnswer(text) {
+  const g = txtCnv.getContext('2d');
+  g.clearRect(0, 0, TRI_W, TRI_H);
+  // равносторонний треугольник вершиной вниз
+  const m = 30, top = m, bottom = TRI_H - m;
+  g.beginPath();
+  g.moveTo(m, top); g.lineTo(TRI_W - m, top); g.lineTo(TRI_W / 2, bottom); g.closePath();
+  const grd = g.createLinearGradient(0, top, 0, bottom);
+  grd.addColorStop(0, '#6A22FF'); grd.addColorStop(1, '#2E0BA8');
+  g.fillStyle = grd; g.fill();
+  g.lineWidth = 12; g.strokeStyle = 'rgba(205,185,255,.9)'; g.stroke();
+
+  g.fillStyle = '#FFFFFF';
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  const words = text.split(' ');
+  let lines = words.length > 1 && text.length > 10
+    ? [words.slice(0, Math.ceil(words.length / 2)).join(' '),
+       words.slice(Math.ceil(words.length / 2)).join(' ')]
+    : [text];
+  let size = 132;
+  const fit = () => {
+    g.font = `700 ${size}px 'MTS Compact', sans-serif`;
+    return Math.max(...lines.map(l => g.measureText(l).width));
+  };
+  // строки сужаются книзу вместе с треугольником — вписываем по самой узкой
+  while (fit() > TRI_W * 0.72 && size > 40) size -= 4;
+  const lh = size * 1.12, y0 = top + TRI_H * 0.30 - (lines.length - 1) * lh / 2;
+  lines.forEach((l, i) => g.fillText(l, TRI_W / 2, y0 + i * lh));
+  txtTex.needsUpdate = true;
+}
+
+const txtMat = new THREE.MeshBasicMaterial({
+  map: txtTex, transparent: true, opacity: 0, depthWrite: false, toneMapped: false });
+const TRI_SIZE = 0.58;
+const txtPlane = new THREE.Mesh(
+  new THREE.PlaneGeometry(TRI_SIZE, TRI_SIZE * (TRI_H / TRI_W)), txtMat);
+txtPlane.rotation.x = -Math.PI / 2;
+txtPlane.renderOrder = 41;          // выше виньетки и бликов — плашка остаётся плотной
+windowRig.add(txtPlane);
+
+die.visible = false;                     // многогранник не нужен: в шаре всплывает плашка
+
+/* ------------- тёмное пространство внутри шара -------------
+   Полость смотрим изнутри, поэтому BackSide: даёт глубину, из которой всплывает ответ. */
+// чернильная жидкость: свет её не берёт — как в настоящем шаре
+const darkInside = new THREE.MeshBasicMaterial({ color: 0x05060f, toneMapped: false });
+// Тёмный «колодец» под окном: закрывает белую изнанку обода и внутренности корпуса.
+// Внутренняя сфера тут не годится — её ближняя стенка ловит свет и окно светлеет.
+const COLLAR_R = 0.396;      // почти во всю ширину выреза — перекрывает изнанку обода
+const collar = new THREE.Mesh(
+  new THREE.CylinderGeometry(COLLAR_R, COLLAR_R, 0.62, 64, 1, true), darkInside.clone());
+collar.material.side = THREE.DoubleSide;
+collar.position.y = manifest.lensBottomZ - 0.29;
+windowRig.add(collar);
+
+const collarFloor = new THREE.Mesh(new THREE.CircleGeometry(COLLAR_R, 64), darkInside.clone());
+collarFloor.rotation.x = -Math.PI / 2;
+collarFloor.position.y = manifest.lensBottomZ - 0.60;
+windowRig.add(collarFloor);
+
+/* ------------- мягкий блик на линзе (поверх стекла) ------------- */
+const hlCnv = document.createElement('canvas'); hlCnv.width = hlCnv.height = 256;
+{ const g = hlCnv.getContext('2d');
+  g.translate(128, 128); g.rotate(-0.5); g.scale(1, 0.42);
+  const gr = g.createRadialGradient(0, 0, 4, 0, 0, 118);
+  gr.addColorStop(0, 'rgba(255,255,255,.72)');
+  gr.addColorStop(.45, 'rgba(230,236,255,.26)');
+  gr.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = gr; g.beginPath(); g.arc(0, 0, 118, 0, 7); g.fill(); }
+const hlTex = new THREE.CanvasTexture(hlCnv);
+const highlights = [];
+const mkHl = (w, h, x, z, op) => {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h),
+    new THREE.MeshBasicMaterial({ map: hlTex, transparent: true, depthWrite: false,
+      depthTest: false, toneMapped: false, blending: THREE.AdditiveBlending, opacity: op }));
+  m.rotation.x = -Math.PI / 2;
+  m.position.set(x, manifest.lensBottomZ + 0.118, z);
+  m.renderOrder = 40;
+  m.userData.baseOpacity = op;
+  windowRig.add(m);
+  highlights.push(m);
+  return m;
+};
+// блики держим у ВЕРХНЕГО края стекла — центр окна с текстом остаётся чистым
+mkHl(0.20, 0.075, -0.03, -0.255, 0.5);
+mkHl(0.07, 0.035, 0.165, -0.19, 0.42);
+
+/* ------------- тёмная глубина внутри окна ------------- */
+const vigCnv = document.createElement('canvas'); vigCnv.width = vigCnv.height = 256;
+{ const g = vigCnv.getContext('2d');
+  const gr = g.createRadialGradient(128, 128, 40, 128, 128, 128);
+  gr.addColorStop(0, 'rgba(2,4,16,0)');
+  gr.addColorStop(.62, 'rgba(2,4,16,.30)');
+  gr.addColorStop(.88, 'rgba(1,2,10,.55)');
+  gr.addColorStop(1, 'rgba(1,2,10,0)');      // к самому краю сходит на нет — без чёрного кольца
+  g.fillStyle = gr; g.beginPath(); g.arc(128, 128, 128, 0, 7); g.fill(); }
+const vig = new THREE.Mesh(
+  new THREE.PlaneGeometry(0.70, 0.70),
+  new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(vigCnv), transparent: true,
+                                depthWrite: false, depthTest: false, toneMapped: false }));
+vig.rotation.x = -Math.PI / 2;
+vig.position.y = manifest.lensBottomZ + 0.112;
+vig.renderOrder = 39;
+windowRig.add(vig);
+
+// сплошное чёрное поле окна — фон, на котором всплывает треугольник (как в реальном шаре)
+const wellFace = new THREE.Mesh(
+  new THREE.CircleGeometry(0.345, 64),
+  new THREE.MeshBasicMaterial({ color: 0x04050e, toneMapped: false,
+                                depthWrite: false, depthTest: false }));
+wellFace.rotation.x = -Math.PI / 2;
+wellFace.position.y = manifest.lensBottomZ - 0.012;
+wellFace.renderOrder = 38;
+windowRig.add(wellFace);
+
+
+/* ================= анимация ================= */
+// треугольник всплывает из глубины колодца к самому стеклу
+const REST = manifest.lensBottomZ - 0.34, ANSWER = manifest.lensBottomZ - 0.055;
+const S = { mode: 'idle', t: 0, dieY: REST, spin: 0, tilt: 0 };
+const BALL_Y = -0.30;                 // шар ниже центра — камера сверху видит экран целиком
+/* Наклон «показа ответа»: доворачиваем шар так, чтобы ось окна смотрела в камеру.
+   Ось окна отклонена от вертикали на windowTiltDeg; направление на камеру — на угол
+   acos(camDirY). Разница и есть нужный доворот (85% — чтобы шар не потерял объём). */
+const camDir = new THREE.Vector3(0, CAM_Y, CAM_Z).normalize();
+const TILT = 0.85 * (Math.acos(camDir.y) - THREE.MathUtils.degToRad(manifest.windowTiltDeg));
+let curAnswer = '';
+let lastTs = performance.now(), elapsed = 0;
+const ease = x => 1 - Math.pow(1 - x, 3);
+
+function resize() {
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  renderer.setSize(w, h);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(wrap);
+resize();
+
+renderer.setAnimationLoop(() => {
+  const now = performance.now();
+  const dt = Math.min((now - lastTs) / 1000, 0.05);
+  lastTs = now; elapsed += dt;
+  const t = elapsed;
+
+  let shakeX = 0, shakeZ = 0, shakeOffX = 0;
+
+  if (S.mode === 'shake') {
+    S.t += dt;
+    const k = S.t / 1.05;                          // длительность встряски
+    const decay = Math.exp(-3.6 * k);
+    shakeZ = Math.sin(S.t * 34) * 0.16 * decay;
+    shakeX = Math.sin(S.t * 27 + 1.3) * 0.10 * decay;
+    shakeOffX = Math.sin(S.t * 40) * 0.035 * decay;
+    if (k >= 1) { S.mode = 'reveal'; S.t = 0; }
+  } else if (S.mode === 'reveal') {
+    S.t += dt;
+    const k = Math.min(S.t / 1.5, 1);
+    const e = ease(k);
+    S.dieY = REST + (ANSWER - REST) * e;
+    S.spin = (1 - e) * 0.9;
+    if (k >= 1) { S.mode = 'answer'; showAnswerCaption(curAnswer); }
+  } else if (S.mode === 'hide') {
+    S.t += dt;
+    const k = Math.min(S.t / 0.5, 1);
+    S.dieY = ANSWER + (REST - ANSWER) * ease(k);
+    if (k >= 1) S.mode = 'idle';
+  }
+
+  // шар наклоняется экраном к зрителю, когда показывает ответ, и выпрямляется обратно
+  const wantTilt = (S.mode === 'reveal' || S.mode === 'answer') ? 1 : 0;
+  S.tilt += (wantTilt - S.tilt) * (1 - Math.exp(-4.5 * dt));
+  const tilt = S.tilt;
+
+  ballGroup.rotation.x = TILT * tilt + shakeX;
+  ballGroup.rotation.z = shakeZ;
+  ballGroup.rotation.y = Math.sin(t * 0.5) * 0.045 * (1 - tilt * 0.7);
+  ballGroup.position.x = shakeOffX;
+  ballGroup.position.y = BALL_Y + Math.sin(t * 1.1) * 0.035 + 0.20 * tilt;
+  ballGroup.position.z = 0.10 * tilt;            // едва заметный шаг к зрителю
+  camera.position.z = CAM_Z + 0.55 * tilt;       // компенсируем, чтобы шар не упирался в края
+  camera.position.y = CAM_Y - 0.55 * tilt;       // и опускаем взгляд к уровню экрана
+  camera.lookAt(0, 0.14 + 0.12 * tilt, 0);
+  glow.material.opacity = (0.85 + Math.sin(t * 1.1) * 0.12) * (1 - 0.35 * tilt);
+  // в момент показа ответа блики притухают, чтобы не спорить с текстом
+  for (const h of highlights) h.material.opacity = h.userData.baseOpacity * (1 - 0.7 * tilt);
+  // стекло гасит отражения, когда показывает ответ, — блик не спорит с текстом
+  if (glassMesh) {
+    glassMesh.material.envMapIntensity = 0.12 - 0.07 * tilt;
+    glassMesh.material.opacity = 0.06 - 0.03 * tilt;   // в момент ответа стекло почти невидимо
+  }
+
+  // всплытие из темноты: плашка поднимается, проявляется и перестаёт покачиваться
+  const depth01 = (S.dieY - REST) / (ANSWER - REST);
+  txtPlane.position.y = S.dieY;
+  txtPlane.rotation.z = S.spin * Math.sin(S.t * 7) * 0.25;
+  txtPlane.scale.setScalar(0.84 + 0.16 * depth01);
+  txtMat.opacity = Math.min(Math.pow(depth01, 1.7) * 1.15, 1);
+
+  renderer.render(scene, camera);
+});
+
+/* ================= UI ================= */
+const form = document.getElementById('askForm');
+const input = document.getElementById('q');
+const sendBtn = document.getElementById('sendBtn');
+const statusEl = document.getElementById('status');
+const statusText = document.getElementById('statusText');
+const hint = document.getElementById('hint');
+
+function setStatus(text) {
+  if (text) {
+    statusText.classList.remove('big');
+    statusText.textContent = text;
+    statusEl.classList.add('show');
+  } else statusEl.classList.remove('show');
+}
+function showAnswerCaption(text) {
+  statusText.classList.add('big');
+  statusText.textContent = text;
+  statusEl.classList.add('show');
+}
+
+let busy = false;
+async function ask(question) {
+  if (busy) return;
+  busy = true; sendBtn.disabled = true; hint.classList.add('hide');
+  if (navigator.userActivation?.hasBeenActive) navigator.vibrate?.(60);
+  // спрятать прошлый ответ, если был
+  if (S.mode === 'answer') { S.mode = 'hide'; S.t = 0; await new Promise(r => setTimeout(r, 520)); }
+  setStatus('шар взвешивает риски…');
+  S.mode = 'shake'; S.t = 0;
+  const answer = await pickAnswer(question);      // ← текст-переменная
+  await document.fonts.ready;
+  curAnswer = answer;
+  drawAnswer(answer);
+  busy = false; sendBtn.disabled = false;
+}
+
+form.addEventListener('submit', e => { e.preventDefault(); ask(input.value.trim()); input.blur(); });
+renderer.domElement.addEventListener('pointerdown', () => ask(input.value.trim()));
+document.getElementById('chips').addEventListener('click', e => {
+  const chip = e.target.closest('.chip');
+  if (!chip) return;
+  input.value = chip.textContent;
+  ask(chip.textContent);
+});
+
+// отладочный доступ из консоли (не влияет на прототип)
+window.__ball = { scene, camera, renderer, die, txtMat, txtPlane, S, manifest, THREE,
+  pick(nx = 0, ny = 0.18) {          // что видно в точке экрана (NDC): диагностика окна
+    const rc = new THREE.Raycaster();
+    rc.setFromCamera(new THREE.Vector2(nx, ny), camera);
+    return rc.intersectObjects(scene.children, true)
+      .map(h => `${h.object.name || h.object.material?.name || '?'}@${h.distance.toFixed(2)}`);
+  } };
+
+/* звёздная пыль */
+const dust = document.getElementById('dust');
+for (let i = 0; i < 26; i++) {
+  const s = document.createElement('i');
+  s.style.left = Math.random() * 100 + '%';
+  s.style.top = Math.random() * 100 + '%';
+  s.style.animationDelay = (Math.random() * 4).toFixed(2) + 's';
+  s.style.animationDuration = (3 + Math.random() * 3).toFixed(2) + 's';
+  const sc = .5 + Math.random();
+  s.style.transform = `scale(${sc})`;
+  dust.appendChild(s);
+}
+</script>
+</body>
+</html>

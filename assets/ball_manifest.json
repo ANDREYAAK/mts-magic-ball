@@ -1,0 +1,19 @@
+{
+  "windowTiltDeg": 33.0,
+  "dieNode": "Die",
+  "windowRigNode": "WindowRig",
+  "dieScale": 1.349206,
+  "faceLocalZ": 0.25032,
+  "faceRadius": 0.1288,
+  "dieAnswerZ": 0.55159,
+  "dieRestZ": 0.25159,
+  "lensBottomZ": 0.90232,
+  "cupTopZ": 0.93432,
+  "answers": [
+    "Бесспорно",
+    "Никаких сомнений",
+    "Определённо да",
+    "Предрешено",
+    "Хорошие перспективы"
+  ]
+}
