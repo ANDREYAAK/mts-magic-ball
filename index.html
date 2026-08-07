@@ -33,8 +33,10 @@
   /* Экран прибит к вьюпорту: страница не скроллится ни при какой высоте адресной строки.
      Три высоты подряд — фолбэк для браузеров без svh/dvh. */
   #stage {
-    position: fixed; inset: 0; margin: 0 auto;
+    position: fixed; top: 0; left: 0; right: 0; margin: 0 auto;
     height: 100vh; height: 100svh; height: 100dvh;
+    height: var(--app-h, 100vh);   /* JS ставит реальную высоту: во встроенных
+                                      WebView мессенджеров vh/svh/dvh врут */
     max-width: 520px; display: flex; flex-direction: column;
     background:
       radial-gradient(120% 55% at 50% -6%, #4A3A8F 0%, rgba(74,58,143,0) 60%),
@@ -189,6 +191,23 @@
 /* Обычный скрипт, без модулей: выполнится даже там, где ES-модули или importmap
    не поддерживаются. Его задача — не оставить пользователя перед пустым экраном. */
 (function () {
+  /* Высота экрана из JS. В in-app браузерах (Telegram, WhatsApp и т.п.) 100vh
+     больше видимой области, а svh/dvh не поддерживаются — вёрстка уезжает вниз. */
+  function applyHeight() {
+    var vv = window.visualViewport;
+    var h = Math.round((vv && vv.height) || window.innerHeight || 0);
+    if (h > 0) document.documentElement.style.setProperty('--app-h', h + 'px');
+  }
+  applyHeight();
+  addEventListener('resize', applyHeight);
+  addEventListener('orientationchange', function () { setTimeout(applyHeight, 300); });
+  addEventListener('pageshow', applyHeight);
+  if (window.visualViewport) {
+    visualViewport.addEventListener('resize', applyHeight);
+    visualViewport.addEventListener('scroll', applyHeight);
+  }
+  document.addEventListener('DOMContentLoaded', applyHeight);
+
   var shown = false;
   function fail(text) {
     if (shown) return;
@@ -200,6 +219,7 @@
     boot.classList.remove('done');
     msg.textContent = text;
   }
+  window.__bootFail = fail;
   window.addEventListener('error', function (e) {
     fail('Не удалось запустить 3D: ' + (e.message || 'ошибка загрузки') +
          '. Попробуйте обновить браузер.');
