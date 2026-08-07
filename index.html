@@ -103,22 +103,22 @@
   .close::before { transform: rotate(45deg); }
   .close::after { transform: rotate(-45deg); }
 
+  /* Вопрос пользователя — под шаром; ответ — в header сверху. */
   #questionLine {
-    position: absolute; left: 20px; right: 20px; top: 10px;
-    z-index: 4; pointer-events: none; text-align: center;
+    flex: 0 0 auto; z-index: 4; pointer-events: none; text-align: center;
+    padding: 0 22px; margin: 0;
     font: 500 clamp(14px, 3.8vw, 17px)/1.35 'MTS Compact';
-    color: rgba(255,255,255,.72); letter-spacing: .01em;
-    opacity: 0; transform: translateY(8px);
-    transition: opacity .4s, transform .4s;
+    color: rgba(255,255,255,.78); letter-spacing: .01em;
+    opacity: 0; max-height: 0; overflow: hidden;
+    transform: translateY(6px);
+    transition: opacity .4s, transform .4s, max-height .4s, margin .4s;
     text-wrap: balance;
     text-shadow: 0 2px 18px rgba(10,6,40,.55);
   }
-  body.is-thinking.has-question #questionLine {
-    opacity: 1; transform: none;
+  body.has-question #questionLine {
+    opacity: 1; max-height: 4.6em; margin: 0 0 6px; transform: none;
   }
-  body.is-answered #questionLine {
-    opacity: 0; transform: translateY(-6px);
-  }
+  body.has-question #hint { opacity: 0; }
 
   #ballWrap { position: relative; flex: 1 1 auto; min-height: 0; z-index: 2; }
   #ballWrap canvas { display: block; width: 100%; height: 100%; cursor: pointer; }
@@ -154,6 +154,8 @@
     .answer { font-size: clamp(17px, 5vw, 22px); }
     .chip { padding: 7px 12px; font-size: 12.5px; }
     #hint { display: none; }
+    #questionLine { font-size: clamp(13px, 3.4vw, 15px); }
+    body.has-question #questionLine { margin-bottom: 2px; }
     header { padding-top: calc(10px + env(safe-area-inset-top)); }
   }
   /* на десктопе — законченная карточка приложения по центру, а не узкая полоса */
@@ -222,12 +224,12 @@
   </header>
 
   <div id="ballWrap">
-    <div id="questionLine" aria-live="polite"></div>
     <div id="boot">
       <div class="ring"></div>
       <div class="msg" id="bootMsg">загружаем шар…</div>
     </div>
   </div>
+  <div id="questionLine" aria-live="polite"></div>
   <div id="hint">нажми на шар, задай вопрос или встряхни телефон</div>
 
   <footer>
