@@ -289,10 +289,11 @@
   }
   document.addEventListener('DOMContentLoaded', function () {
     layout();
-    var q = document.getElementById('q');
-    if (q) {
-      q.addEventListener('focus', function () { setTimeout(layout, 120); });
-      q.addEventListener('blur', function () { setTimeout(layout, 120); });
+    /* delegation: поле #q могут пересоздавать при очистке на iOS */
+    var form = document.getElementById('askForm');
+    if (form) {
+      form.addEventListener('focusin', function () { setTimeout(layout, 120); });
+      form.addEventListener('focusout', function () { setTimeout(layout, 120); });
     }
   });
 
