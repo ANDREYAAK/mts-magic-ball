@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
 <title>Финансовый шарик — МТС Деньги</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔮</text></svg>">
 <style>
@@ -27,8 +27,12 @@
   body {
     font-family: 'MTS Compact', system-ui, sans-serif;
     color: var(--ink);
-    background: #120E2B;
     overflow: hidden;
+    /* фон во всю ширину окна — на десктопе не остаётся чёрных полей по бокам */
+    background:
+      radial-gradient(120% 55% at 50% -6%, #4A3A8F 0%, rgba(74,58,143,0) 60%),
+      radial-gradient(130% 70% at 50% 108%, #2C2064 0%, rgba(44,32,100,0) 62%),
+      linear-gradient(180deg, #1A1440 0%, #151034 52%, #120E2B 100%);
   }
   /* Экран прибит к вьюпорту: страница не скроллится ни при какой высоте адресной строки.
      Три высоты подряд — фолбэк для браузеров без svh/dvh. */
@@ -38,10 +42,6 @@
     height: var(--app-h, 100vh);   /* JS ставит реальную высоту: во встроенных
                                       WebView мессенджеров vh/svh/dvh врут */
     max-width: 520px; display: flex; flex-direction: column;
-    background:
-      radial-gradient(120% 55% at 50% -6%, #4A3A8F 0%, rgba(74,58,143,0) 60%),
-      radial-gradient(130% 70% at 50% 108%, #2C2064 0%, rgba(44,32,100,0) 62%),
-      linear-gradient(180deg, #1A1440 0%, #151034 52%, #120E2B 100%);
   }
   /* звёздная пыль */
   .dust { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
@@ -56,10 +56,33 @@
   }
 
   header {
-    position: relative; z-index: 5;
-    padding: calc(14px + env(safe-area-inset-top)) 20px 0;
-    display: flex; align-items: center; justify-content: flex-end;
+    position: relative; z-index: 5; flex: 0 0 auto;
+    padding: calc(16px + env(safe-area-inset-top)) 18px 0;
+    display: flex; align-items: flex-start; gap: 12px;
   }
+  /* Верхняя строка: в покое — призыв, после встряски — сам ответ.
+     Высота фиксируется по содержимому, поэтому шар не прыгает при смене текста. */
+  .headline { flex: 1 1 auto; min-width: 0; display: grid; }
+  .headline > * { grid-area: 1 / 1; transition: opacity .35s, transform .35s; }
+  .punch {
+    font: 700 clamp(19px, 5.6vw, 27px)/1.18 'MTS Wide';
+    letter-spacing: .01em;
+  }
+  .punch em { font-style: normal; color: #B7A9FF; }
+  .answer {
+    font: 700 clamp(21px, 6.4vw, 30px)/1.14 'MTS Wide';
+    color: #fff; text-shadow: 0 4px 34px rgba(150,128,255,.55);
+    opacity: 0; transform: translateY(8px);
+  }
+  /* состояния помечаем префиксом is-, чтобы класс на <body> не совпал с классом элемента */
+  #statusText {
+    font: 400 13px/1.35 'MTS Compact'; color: var(--ink-dim);
+    letter-spacing: .04em; opacity: 0; transform: translateY(6px); align-self: center;
+  }
+  body.is-answered .punch { opacity: 0; transform: translateY(-8px); }
+  body.is-answered .answer { opacity: 1; transform: none; }
+  body.is-thinking .punch { opacity: 0; transform: translateY(-6px); }
+  body.is-thinking #statusText { opacity: 1; transform: none; }
   .close {
     width: 34px; height: 34px; border-radius: 50%; border: 0; cursor: pointer;
     background: rgba(255,255,255,.10); color: var(--ink-dim); font-size: 15px;
@@ -83,33 +106,35 @@
   @keyframes spin { to { transform: rotate(360deg); } }
   #boot .msg { font: 400 13px/1.45 'MTS Compact'; color: var(--ink-dim); max-width: 300px; }
 
-  /* статус над шаром */
-  #status {
-    position: absolute; left: 0; right: 0; top: 6%;
-    text-align: center; pointer-events: none; z-index: 4;
-    opacity: 0; transform: translateY(6px); transition: opacity .45s, transform .45s;
-  }
-  #status.show { opacity: 1; transform: none; }
-  #status .cap { font: 400 13px/1.3 'MTS Compact'; color: var(--ink-dim); letter-spacing: .04em; }
-  #status .cap.big {
-    font: 700 clamp(20px, 5.6vw, 24px)/1.2 'MTS Wide'; color: #fff; letter-spacing: .01em;
-    text-shadow: 0 4px 34px rgba(150,128,255,.55);
-  }
 
   footer {
     position: relative; z-index: 5; flex: 0 0 auto;
-    padding: 0 16px calc(12px + env(safe-area-inset-bottom));
+    padding-left: 16px; padding-right: 16px; padding-top: 0;
+    /* при открытой клавиатуре JS дописывает сюда её высоту через <style id="kbStyle"> */
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
     display: flex; flex-direction: column; gap: clamp(8px, 2vh, 14px);
   }
-  .punch {
-    font: 700 clamp(18px, 5.4vw, 26px)/1.16 'MTS Wide';
-    letter-spacing: .01em; padding: 0 6px;
-  }
-  /* на низких экранах жертвуем крупным заголовком, лишь бы всё влезло без скролла */
-  @media (max-height: 620px) {
+  /* пока человек печатает, лишнее убираем — поле и подсказки должны быть на виду */
+  body.kb-open #hint { display: none; }
+  /* на низких экранах ужимаем текст, лишь бы всё влезло без скролла */
+  @media (max-height: 640px) {
     .punch { font-size: clamp(15px, 4.4vw, 19px); }
+    .answer { font-size: clamp(17px, 5vw, 22px); }
     .chip { padding: 7px 12px; font-size: 12.5px; }
     #hint { display: none; }
+    header { padding-top: calc(10px + env(safe-area-inset-top)); }
+  }
+  /* на десктопе — законченная карточка приложения по центру, а не узкая полоса */
+  @media (min-width: 680px) and (min-height: 660px) {
+    body { display: grid; place-items: center; }
+    #stage {
+      position: relative; top: auto; left: auto; right: auto;
+      height: min(860px, 92vh); max-width: 430px;
+      border-radius: 30px; overflow: hidden;
+      box-shadow: 0 40px 120px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.07);
+      background: linear-gradient(180deg, #1A1440 0%, #151034 52%, #120E2B 100%);
+    }
+    header { padding-top: 22px; }
   }
   .punch em { font-style: normal; color: #B7A9FF; }
   .chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 0 2px; }
@@ -150,16 +175,21 @@
   }
   #hint.hide { opacity: 0; }
 </style>
+<style id="kbStyle"></style>
 </head>
 <body>
 <div id="stage">
   <div class="dust" id="dust"></div>
   <header>
+    <div class="headline">
+      <div class="punch">Спроси про деньги — <em>шар уже знает</em></div>
+      <div class="answer" id="answerLine" aria-live="polite"></div>
+      <div class="thinking" id="statusText"></div>
+    </div>
     <button class="close" aria-label="Закрыть">✕</button>
   </header>
 
   <div id="ballWrap">
-    <div id="status"><div class="cap" id="statusText">шар думает…</div></div>
     <div id="boot">
       <div class="ring"></div>
       <div class="msg" id="bootMsg">загружаем шар…</div>
@@ -168,7 +198,6 @@
   <div id="hint">нажми на шар или задай вопрос</div>
 
   <footer>
-    <div class="punch">Спроси про деньги — <em>шар уже знает</em></div>
     <div class="chips" id="chips">
       <button class="chip">Стоит ли инвестировать?</button>
       <button class="chip">Брать ли кредит?</button>
@@ -191,22 +220,47 @@
 /* Обычный скрипт, без модулей: выполнится даже там, где ES-модули или importmap
    не поддерживаются. Его задача — не оставить пользователя перед пустым экраном. */
 (function () {
-  /* Высота экрана из JS. В in-app браузерах (Telegram, WhatsApp и т.п.) 100vh
-     больше видимой области, а svh/dvh не поддерживаются — вёрстка уезжает вниз. */
-  function applyHeight() {
+  /* Высота экрана из JS: в in-app браузерах (Telegram и т.п.) 100vh больше видимой
+     области, а svh/dvh не поддерживаются. Клавиатура — отдельный случай: под неё
+     нельзя ужимать экран, иначе всё «схлопывается». Поднимаем только поле ввода. */
+  var root = document.documentElement;
+  function layout() {
     var vv = window.visualViewport;
-    var h = Math.round((vv && vv.height) || window.innerHeight || 0);
-    if (h > 0) document.documentElement.style.setProperty('--app-h', h + 'px');
+    var winH = window.innerHeight || 0;
+    var kb = vv ? Math.max(0, winH - vv.height - vv.offsetTop) : 0;
+    var kbStyle = document.getElementById('kbStyle');
+    if (kb < 120) {                       // клавиатуры нет — фиксируем высоту экрана
+      var h = Math.round((vv && vv.height) || winH);
+      if (h > 0) root.style.setProperty('--app-h', h + 'px');
+      if (kbStyle) kbStyle.textContent = '';
+      document.body.classList.remove('kb-open');
+    } else {
+      // Клавиатура открыта: высоту экрана НЕ трогаем (иначе всё схлопывается),
+      // а отдаём ей место снизу — поле встаёт над клавиатурой, шар ужимается.
+      // Правило пишем целиком: var() в calc здесь срабатывает не во всех движках.
+      if (kbStyle) kbStyle.textContent =
+        'footer{padding-bottom:' + (Math.round(kb) + 12) + 'px !important}';
+      document.body.classList.add('kb-open');
+    }
+    if (window.pageYOffset) window.scrollTo(0, 0);   // iOS сам скроллит к полю — отменяем
   }
-  applyHeight();
-  addEventListener('resize', applyHeight);
-  addEventListener('orientationchange', function () { setTimeout(applyHeight, 300); });
-  addEventListener('pageshow', applyHeight);
+  layout();
+  addEventListener('resize', layout);
+  addEventListener('scroll', layout, { passive: true });
+  addEventListener('orientationchange', function () { setTimeout(layout, 300); });
+  addEventListener('pageshow', layout);
   if (window.visualViewport) {
-    visualViewport.addEventListener('resize', applyHeight);
-    visualViewport.addEventListener('scroll', applyHeight);
+    visualViewport.addEventListener('resize', layout);
+    visualViewport.addEventListener('scroll', layout);
   }
-  document.addEventListener('DOMContentLoaded', applyHeight);
+  document.addEventListener('DOMContentLoaded', function () {
+    layout();
+    var q = document.getElementById('q');
+    if (q) {
+      q.addEventListener('focus', function () { setTimeout(layout, 120); });
+      q.addEventListener('blur', function () { setTimeout(layout, 120); });
+    }
+  });
 
   var shown = false;
   function fail(text) {
