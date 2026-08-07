@@ -84,8 +84,28 @@
   body.is-thinking .punch { opacity: 0; transform: translateY(-6px); }
   body.is-thinking #statusText { opacity: 1; transform: none; }
   .close {
-    width: 34px; height: 34px; border-radius: 50%; border: 0; cursor: pointer;
-    background: rgba(255,255,255,.10); color: var(--ink-dim); font-size: 15px;
+    flex: 0 0 34px; width: 34px; height: 34px; aspect-ratio: 1; padding: 0;
+    border-radius: 50%; border: 0; cursor: pointer;
+    background: rgba(255,255,255,.10); color: var(--ink-dim);
+    display: grid; place-items: center; line-height: 1;
+  }
+  .close svg { width: 14px; height: 14px; display: block; }
+
+  #questionLine {
+    position: absolute; left: 20px; right: 20px; top: 10px;
+    z-index: 4; pointer-events: none; text-align: center;
+    font: 500 clamp(14px, 3.8vw, 17px)/1.35 'MTS Compact';
+    color: rgba(255,255,255,.72); letter-spacing: .01em;
+    opacity: 0; transform: translateY(8px);
+    transition: opacity .4s, transform .4s;
+    text-wrap: balance;
+    text-shadow: 0 2px 18px rgba(10,6,40,.55);
+  }
+  body.is-thinking.has-question #questionLine {
+    opacity: 1; transform: none;
+  }
+  body.is-answered #questionLine {
+    opacity: 0; transform: translateY(-6px);
   }
 
   #ballWrap { position: relative; flex: 1 1 auto; min-height: 0; z-index: 2; }
@@ -186,16 +206,21 @@
       <div class="answer" id="answerLine" aria-live="polite"></div>
       <div class="thinking" id="statusText"></div>
     </div>
-    <button class="close" aria-label="Закрыть">✕</button>
+    <button class="close" aria-label="Закрыть" type="button">
+      <svg viewBox="0 0 14 14" fill="none" aria-hidden="true">
+        <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+      </svg>
+    </button>
   </header>
 
   <div id="ballWrap">
+    <div id="questionLine" aria-live="polite"></div>
     <div id="boot">
       <div class="ring"></div>
       <div class="msg" id="bootMsg">загружаем шар…</div>
     </div>
   </div>
-  <div id="hint">нажми на шар или задай вопрос</div>
+  <div id="hint">нажми на шар, задай вопрос или встряхни телефон</div>
 
   <footer>
     <div class="chips" id="chips">
