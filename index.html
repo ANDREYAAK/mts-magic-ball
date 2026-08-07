@@ -103,20 +103,19 @@
   .close::before { transform: rotate(45deg); }
   .close::after { transform: rotate(-45deg); }
 
-  /* Вопрос пользователя — под шаром; ответ — в header сверху. */
+  /* Вопрос — внизу области шара (под сферой); ответ — в header сверху. */
   #questionLine {
-    flex: 0 0 auto; z-index: 4; pointer-events: none; text-align: center;
-    padding: 0 22px; margin: 0;
+    position: absolute; left: 18px; right: 18px; bottom: 2%;
+    z-index: 5; pointer-events: none; text-align: center;
     font: 500 clamp(14px, 3.8vw, 17px)/1.35 'MTS Compact';
-    color: rgba(255,255,255,.78); letter-spacing: .01em;
-    opacity: 0; max-height: 0; overflow: hidden;
-    transform: translateY(6px);
-    transition: opacity .4s, transform .4s, max-height .4s, margin .4s;
+    color: rgba(255,255,255,.82); letter-spacing: .01em;
+    opacity: 0; transform: translateY(8px);
+    transition: opacity .4s, transform .4s;
     text-wrap: balance;
-    text-shadow: 0 2px 18px rgba(10,6,40,.55);
+    text-shadow: 0 2px 18px rgba(10,6,40,.65);
   }
   body.has-question #questionLine {
-    opacity: 1; max-height: 4.6em; margin: 0 0 6px; transform: none;
+    opacity: 1; transform: none;
   }
   body.has-question #hint { opacity: 0; }
 
@@ -154,8 +153,7 @@
     .answer { font-size: clamp(17px, 5vw, 22px); }
     .chip { padding: 7px 12px; font-size: 12.5px; }
     #hint { display: none; }
-    #questionLine { font-size: clamp(13px, 3.4vw, 15px); }
-    body.has-question #questionLine { margin-bottom: 2px; }
+    #questionLine { font-size: clamp(13px, 3.4vw, 15px); bottom: 1%; }
     header { padding-top: calc(10px + env(safe-area-inset-top)); }
   }
   /* на десктопе — законченная карточка приложения по центру, а не узкая полоса */
@@ -228,8 +226,8 @@
       <div class="ring"></div>
       <div class="msg" id="bootMsg">загружаем шар…</div>
     </div>
+    <div id="questionLine" aria-live="polite"></div>
   </div>
-  <div id="questionLine" aria-live="polite"></div>
   <div id="hint">нажми на шар, задай вопрос или встряхни телефон</div>
 
   <footer>
