@@ -80,11 +80,13 @@
     letter-spacing: .04em; opacity: 0; transform: translateY(6px); align-self: center;
   }
   body.is-answered .punch { opacity: 0; transform: translateY(-8px); }
-  /* ответ заметно ниже крестика и по центру */
+  /* ответ ниже крестика; центрируем по ширине экрана
+     (компенсируем колонку крестика 34px + gap 12px → сдвиг на половину) */
   body.is-answered .answer {
-    opacity: 1; transform: none;
+    opacity: 1;
     padding-top: 56px;
     text-align: center;
+    transform: translateX(23px);
   }
   body.is-thinking .punch { opacity: 0; transform: translateY(-6px); }
   body.is-thinking #statusText { opacity: 1; transform: none; }
