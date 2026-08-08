@@ -56,12 +56,12 @@
   }
 
   header {
+    --header-pad-top: calc(16px + env(safe-area-inset-top));
     position: relative; z-index: 5; flex: 0 0 auto;
-    padding: calc(16px + env(safe-area-inset-top)) 18px 0;
+    padding: var(--header-pad-top) 18px 0;
     display: flex; align-items: flex-start; gap: 12px;
   }
-  /* Верхняя строка: в покое — призыв, после встряски — сам ответ.
-     Высота фиксируется по содержимому, поэтому шар не прыгает при смене текста. */
+  /* Высота шапки только от .punch — ответ абсолютный, иначе шар дёргается. */
   .headline { flex: 1 1 auto; min-width: 0; display: grid; }
   .headline > * { grid-area: 1 / 1; transition: opacity .35s, transform .35s; }
   .punch {
@@ -70,6 +70,9 @@
   }
   .punch em { font-style: normal; color: #B7A9FF; }
   .answer {
+    position: absolute; left: 0; right: 0; z-index: 6;
+    top: calc(var(--header-pad-top) + 52px);
+    padding: 0 18px; text-align: center; pointer-events: none;
     font: 700 clamp(21px, 6.4vw, 30px)/1.14 'MTS Wide';
     color: #fff; text-shadow: 0 4px 34px rgba(150,128,255,.55);
     opacity: 0; transform: translateY(8px);
@@ -80,14 +83,7 @@
     letter-spacing: .04em; opacity: 0; transform: translateY(6px); align-self: center;
   }
   body.is-answered .punch { opacity: 0; transform: translateY(-8px); }
-  /* ответ ниже крестика; центрируем по ширине экрана
-     (компенсируем колонку крестика 34px + gap 12px → сдвиг на половину) */
-  body.is-answered .answer {
-    opacity: 1;
-    padding-top: 56px;
-    text-align: center;
-    transform: translateX(23px);
-  }
+  body.is-answered .answer { opacity: 1; transform: none; }
   body.is-thinking .punch { opacity: 0; transform: translateY(-6px); }
   body.is-thinking #statusText { opacity: 1; transform: none; }
   /* Крестик только CSS: на iOS Safari SVG/символ в <button> часто сплющивается. */
@@ -161,7 +157,7 @@
     .chip { padding: 7px 12px; font-size: 12.5px; }
     #hint { display: none; }
     #questionLine { font-size: clamp(13px, 3.4vw, 15px); bottom: 10%; }
-    header { padding-top: calc(10px + env(safe-area-inset-top)); }
+    header { --header-pad-top: calc(10px + env(safe-area-inset-top)); }
   }
   /* на десктопе — законченная карточка приложения по центру, а не узкая полоса */
   @media (min-width: 680px) and (min-height: 660px) {
@@ -173,7 +169,7 @@
       box-shadow: 0 40px 120px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.07);
       background: linear-gradient(180deg, #1A1440 0%, #151034 52%, #120E2B 100%);
     }
-    header { padding-top: 22px; }
+    header { --header-pad-top: 22px; }
   }
   .punch em { font-style: normal; color: #B7A9FF; }
   .chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 0 2px; }
