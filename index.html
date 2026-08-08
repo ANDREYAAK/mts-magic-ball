@@ -80,10 +80,11 @@
     letter-spacing: .04em; opacity: 0; transform: translateY(6px); align-self: center;
   }
   body.is-answered .punch { opacity: 0; transform: translateY(-8px); }
-  /* ответ ниже уровня крестика (34px), а не в одну линию с ним */
+  /* ответ заметно ниже крестика и по центру */
   body.is-answered .answer {
     opacity: 1; transform: none;
-    padding-top: 28px;
+    padding-top: 56px;
+    text-align: center;
   }
   body.is-thinking .punch { opacity: 0; transform: translateY(-6px); }
   body.is-thinking #statusText { opacity: 1; transform: none; }
