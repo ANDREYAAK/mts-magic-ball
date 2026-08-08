@@ -178,10 +178,19 @@
     box-shadow: 0 14px 40px rgba(6,4,26,.45);
   }
   .ask input {
-    flex: 1; border: 0; outline: 0; background: transparent;
-    font: 500 15.5px/1.2 'MTS Compact'; color: #1A1A24; min-width: 0;
+    flex: 1; border: 0; outline: 0;
+    /* непрозрачный фон: на старых LCD/WebView caret с transparent оставляет зелёный шлейф */
+    background: #fff; color: #1A1A24; caret-color: #1A1A24;
+    -webkit-appearance: none; appearance: none;
+    font: 500 15.5px/1.2 'MTS Compact'; min-width: 0;
   }
   .ask input::placeholder { color: #9A97AC; }
+  .ask input:-webkit-autofill,
+  .ask input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 40px #fff inset;
+    -webkit-text-fill-color: #1A1A24;
+    caret-color: #1A1A24;
+  }
   /* Кнопка в языке МТС: скруглённый квадрат («сквиркл»), фирменный красный, белая иконка */
   .ask button {
     width: 46px; height: 46px; border-radius: 14px; border: 0; cursor: pointer;
