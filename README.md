@@ -7,19 +7,9 @@
 
 ## Рабочая точка отката
 
-Тег **`stable-ok`** и ветка **`stable/ok`** (коммит `3a29ba8`, 2026-08-08) —
-проверенная версия: окно без щели, текст ответа виден, UX на месте.
-
-Откат публикации:
-
-```bash
-git checkout stable-ok
-git checkout -B main
-git push -f origin main   # только для сознательного отката Pages
-```
-
-Исходник проекта лежит рядом в `../web/index.stable-ok.html`
-(`cp ../web/index.stable-ok.html ../web/index.html` → `python3 ../build.py both`).
+Тег **`stable-ok`** и ветка **`stable/ok`** (коммит `3a29ba8`) —
+проверенная версия окна/UX. Откат Pages: см. корневой `README.md` репозитория
+или `dist` (`git checkout stable-ok`). Снимок исходника: `index.stable-ok.html`.
 
 ## Как устроено
 
