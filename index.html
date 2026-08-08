@@ -1,4 +1,17 @@
 <!DOCTYPE html>
+<!--
+  Финансовый шарик МТС Деньги — готовый прототип.
+
+  Для коллег: отдайте файл financial-ball.html (сборка: python3 build.py single).
+  Его можно открыть двойным кликом, положить на любой HTTPS-хост или в WebView.
+  Ничего настраивать не нужно.
+
+  UTM-ссылка (пример):
+    https://ваш-домен/ball.html?utm_source=sms&utm_medium=push&utm_campaign=magic_ball
+  События уходят в window.dataLayer (GTM) и копится в localStorage / window.__ballStats:
+    ball_view, ball_ask (trigger: form|chip|tap|shake), ball_answer.
+  Смотреть счётчики в консоли: __ballStats.summary()
+-->
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
@@ -59,10 +72,9 @@
     --header-pad-top: calc(16px + env(safe-area-inset-top));
     position: relative; z-index: 5; flex: 0 0 auto;
     padding: var(--header-pad-top) 18px 0;
-    display: flex; align-items: flex-start; gap: 12px;
   }
   /* Высота шапки только от .punch — ответ абсолютный, иначе шар дёргается. */
-  .headline { flex: 1 1 auto; min-width: 0; display: grid; }
+  .headline { display: grid; }
   .headline > * { grid-area: 1 / 1; transition: opacity .35s, transform .35s; }
   .punch {
     font: 700 clamp(19px, 5.6vw, 27px)/1.18 'MTS Wide';
@@ -86,25 +98,6 @@
   body.is-answered .answer { opacity: 1; transform: none; }
   body.is-thinking .punch { opacity: 0; transform: translateY(-6px); }
   body.is-thinking #statusText { opacity: 1; transform: none; }
-  /* Крестик только CSS: на iOS Safari SVG/символ в <button> часто сплющивается. */
-  .close {
-    -webkit-appearance: none; appearance: none;
-    position: relative; flex: none; flex-shrink: 0;
-    box-sizing: border-box;
-    width: 34px; height: 34px; min-width: 34px; min-height: 34px;
-    max-width: 34px; max-height: 34px; padding: 0; margin: 0;
-    border: 0; border-radius: 50%; cursor: pointer;
-    background: rgba(255,255,255,.10); color: var(--ink-dim);
-    font-size: 0; line-height: 0; overflow: hidden;
-  }
-  .close::before,
-  .close::after {
-    content: ''; position: absolute; left: 50%; top: 50%;
-    width: 14px; height: 1.5px; margin: -0.75px 0 0 -7px;
-    background: currentColor; border-radius: 1px;
-  }
-  .close::before { transform: rotate(45deg); }
-  .close::after { transform: rotate(-45deg); }
 
   /* Вопрос под сферой (absolute в ballWrap). */
   #questionLine {
@@ -221,7 +214,6 @@
       <div class="answer" id="answerLine" aria-live="polite"></div>
       <div class="thinking" id="statusText"></div>
     </div>
-    <button class="close" aria-label="Закрыть" type="button"></button>
   </header>
 
   <div id="ballWrap">
@@ -333,6 +325,6 @@
   });
 })();
 </script>
-<script src="bundle.js?v=adbb47f607"></script>
+<script src="bundle.js?v=cec6f245a5"></script>
 </body>
 </html>
