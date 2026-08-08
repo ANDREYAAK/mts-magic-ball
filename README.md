@@ -9,7 +9,7 @@
 
 Готовый один файл лежит рядом в репозитории исходников: `financial-ball.html`
 (сборка `python3 build.py single`). UTM в URL учитываются сами;
-счётчики в консоли: `__ballStats.summary()`. Подробности — `ДЛЯ_КОЛЛЕГ.md`.
+счётчики в консоли: `__ballStats.summary()`. Подробности — `FOR_COLLEAGUES.md`.
 
 ## Рабочая точка отката
 
