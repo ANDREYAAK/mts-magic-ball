@@ -75,18 +75,6 @@
                                       WebView мессенджеров vh/svh/dvh врут */
     max-width: 520px; display: flex; flex-direction: column;
   }
-  /* звёздная пыль */
-  .dust { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
-  .dust i {
-    position: absolute; display: block; width: 4px; height: 4px; border-radius: 50%;
-    background: var(--scene-dark); opacity: 0;
-    animation: tw 4.2s ease-in-out infinite;
-  }
-  @keyframes tw {
-    0%, 100% { opacity: 0; transform: translateY(0) scale(.6); }
-    45% { opacity: .78; transform: translateY(-7px) scale(1); }
-  }
-
   header {
     --header-pad-top: calc(16px + env(safe-area-inset-top));
     --headline-shift: clamp(16px, 5vh, 46px);
@@ -265,7 +253,6 @@
 </head>
 <body>
 <div id="stage">
-  <div class="dust" id="dust"></div>
   <header>
     <div class="brandbar">
       <img class="brandbar__mts" src="assets/brand/logo-mts.png" alt="МТС" />
@@ -387,6 +374,6 @@
   });
 })();
 </script>
-<script src="bundle.js?v=4296ac2299"></script>
+<script src="bundle.js?v=657aa1c3e1"></script>
 </body>
 </html>
