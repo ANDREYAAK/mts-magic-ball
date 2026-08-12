@@ -15,7 +15,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=overlays-content">
 <title>Финансовый шарик — МТС Деньги</title>
 <link rel="icon" type="image/svg+xml" href="assets/brand/favicon.svg">
 <style>
@@ -74,6 +74,7 @@
     height: var(--app-h, 100vh);   /* JS ставит реальную высоту: во встроенных
                                       WebView мессенджеров vh/svh/dvh врут */
     max-width: 520px; display: flex; flex-direction: column;
+    transition: transform .22s ease-out;   /* сдвиг под клавиатуру */
   }
   header {
     --header-pad-top: calc(16px + env(safe-area-inset-top));
@@ -313,11 +314,13 @@
       if (kbStyle) kbStyle.textContent = '';
       document.body.classList.remove('kb-open');
     } else {
-      // Клавиатура открыта: высоту экрана НЕ трогаем (иначе всё схлопывается),
-      // а отдаём ей место снизу — поле встаёт над клавиатурой, шар ужимается.
-      // Правило пишем целиком: var() в calc здесь срабатывает не во всех движках.
+      // Клавиатура открыта. Раньше мы отдавали ей место через padding футера,
+      // но #ballWrap растягивающийся, и вся отнятая высота съедалась им —
+      // шар схлопывался. Теперь ничего не ужимаем: сдвигаем экран целиком
+      // вверх ровно на высоту клавиатуры. Поле оказывается над ней, шар
+      // сохраняет размер, клавиатура просто перекрывает нижнюю часть.
       if (kbStyle) kbStyle.textContent =
-        'footer{padding-bottom:' + (Math.round(kb) + 12) + 'px !important}';
+        '#stage{transform:translateY(-' + Math.round(kb) + 'px)}';
       document.body.classList.add('kb-open');
     }
     if (window.pageYOffset) window.scrollTo(0, 0);   // iOS сам скроллит к полю — отменяем
@@ -374,6 +377,6 @@
   });
 })();
 </script>
-<script src="bundle.js?v=657aa1c3e1"></script>
+<script src="bundle.js?v=51efe38436"></script>
 </body>
 </html>
