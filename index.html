@@ -303,28 +303,54 @@
      области, а svh/dvh не поддерживаются. Клавиатура — отдельный случай: под неё
      нельзя ужимать экран, иначе всё «схлопывается». Поднимаем только поле ввода. */
   var root = document.documentElement;
+  var BUILD = 'kb-fix-3';        // видно в ?debug=1 — проверить, что телефон взял свежую версию
+  var restH = 0;                 // высота экрана без клавиатуры
+  var lastKbRule = null;         // последнее записанное правило
+
+  /* Сдвиг задаём инлайном, а не правилом в <style>: layout() висит на scroll,
+     resize и visualViewport, и переписывание таблицы стилей по нескольку раз
+     в секунду перезапускало CSS-переход. Инлайн проще и не трогает каскад.
+     Пишем только при изменении значения. */
+  function setShift(px) {
+    var v = px ? 'translateY(-' + Math.round(px) + 'px)' : '';
+    if (v === lastKbRule) return;
+    lastKbRule = v;
+    var st = document.getElementById('stage');
+    if (st) st.style.transform = v;
+  }
+
+  function typing() {
+    var el = document.activeElement;
+    return !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
+  }
+
+  /* Ключевое: --app-h нельзя пересчитывать, пока поле в фокусе.
+     iOS Safari при открытии клавиатуры ужимает и innerHeight, и
+     visualViewport.height, поэтому прежняя проверка (winH - vv.height) давала
+     kb ≈ 0, код считал что клавиатуры нет и записывал в --app-h уже
+     укороченную высоту — экран схлопывался вместе с шаром.
+     Теперь высоту покоя запоминаем и во время набора не трогаем вообще. */
   function layout() {
     var vv = window.visualViewport;
-    var winH = window.innerHeight || 0;
-    var kb = vv ? Math.max(0, winH - vv.height - vv.offsetTop) : 0;
-    var kbStyle = document.getElementById('kbStyle');
-    if (kb < 120) {                       // клавиатуры нет — фиксируем высоту экрана
-      var h = Math.round((vv && vv.height) || winH);
-      if (h > 0) root.style.setProperty('--app-h', h + 'px');
-      if (kbStyle) kbStyle.textContent = '';
+    var visH = Math.round((vv && vv.height) || window.innerHeight || 0);
+
+    if (!typing()) {
+      if (visH > 0) {
+        restH = visH;
+        root.style.setProperty('--app-h', visH + 'px');
+      }
+      setShift(0);
       document.body.classList.remove('kb-open');
     } else {
-      // Клавиатура открыта. Раньше мы отдавали ей место через padding футера,
-      // но #ballWrap растягивающийся, и вся отнятая высота съедалась им —
-      // шар схлопывался. Теперь ничего не ужимаем: сдвигаем экран целиком
-      // вверх ровно на высоту клавиатуры. Поле оказывается над ней, шар
-      // сохраняет размер, клавиатура просто перекрывает нижнюю часть.
-      if (kbStyle) kbStyle.textContent =
-        '#stage{transform:translateY(-' + Math.round(kb) + 'px)}';
-      document.body.classList.add('kb-open');
+      var kb = Math.max(0, restH - visH);
+      var on = kb > 60;
+      setShift(on ? kb : 0);
+      if (on) document.body.classList.add('kb-open');
+      else document.body.classList.remove('kb-open');
     }
     if (window.pageYOffset) window.scrollTo(0, 0);   // iOS сам скроллит к полю — отменяем
   }
+
   layout();
   addEventListener('resize', layout);
   addEventListener('scroll', layout, { passive: true });
@@ -334,15 +360,36 @@
     visualViewport.addEventListener('resize', layout);
     visualViewport.addEventListener('scroll', layout);
   }
-  document.addEventListener('DOMContentLoaded', function () {
-    layout();
-    /* delegation: поле #q могут пересоздавать при очистке на iOS */
-    var form = document.getElementById('askForm');
-    if (form) {
-      form.addEventListener('focusin', function () { setTimeout(layout, 120); });
-      form.addEventListener('focusout', function () { setTimeout(layout, 120); });
-    }
-  });
+  // на документе, а не на форме: поле #q пересоздают при очистке на iOS
+  document.addEventListener('focusin', function () { setTimeout(layout, 60); });
+  document.addEventListener('focusout', function () { setTimeout(layout, 60); });
+  document.addEventListener('DOMContentLoaded', layout);
+
+  /* ?debug=1 — живые цифры вьюпорта. Нужны, чтобы чинить поведение iOS
+     по фактам, а не по догадкам: воспроизвести его на десктопе нельзя. */
+  if (/[?&]debug=1/.test(location.search)) {
+    var dbg = document.createElement('div');
+    dbg.style.cssText = 'position:fixed;left:6px;top:6px;z-index:99;font:11px/1.4 ui-monospace,monospace;'
+      + 'background:rgba(48,59,87,.92);color:#D9F38B;padding:7px 9px;border-radius:8px;'
+      + 'white-space:pre;pointer-events:none';
+    var mount = function () { if (document.body) document.body.appendChild(dbg); };
+    if (document.body) mount(); else document.addEventListener('DOMContentLoaded', mount);
+    setInterval(function () {
+      var vv = window.visualViewport;
+      var visH = Math.round((vv && vv.height) || window.innerHeight || 0);
+      dbg.textContent =
+        'build   ' + BUILD +
+        '\ninnerH  ' + window.innerHeight +
+        '\nvvH     ' + (vv ? Math.round(vv.height) : '-') +
+        '\nvvTop   ' + (vv ? Math.round(vv.offsetTop) : '-') +
+        '\nrestH   ' + restH +
+        '\nkb      ' + Math.max(0, restH - visH) +
+        '\napp-h   ' + (root.style.getPropertyValue('--app-h') || '-') +
+        '\ntyping  ' + typing() +
+        '\nmotion  ' + (window.__motion ? window.__motion.state : 'нет') +
+        '\nscrollY ' + Math.round(window.pageYOffset);
+    }, 200);
+  }
 
   var shown = false;
   function fail(text) {
@@ -377,6 +424,6 @@
   });
 })();
 </script>
-<script src="bundle.js?v=51efe38436"></script>
+<script src="bundle.js?v=1f26b99f9e"></script>
 </body>
 </html>
