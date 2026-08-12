@@ -303,7 +303,7 @@
      области, а svh/dvh не поддерживаются. Клавиатура — отдельный случай: под неё
      нельзя ужимать экран, иначе всё «схлопывается». Поднимаем только поле ввода. */
   var root = document.documentElement;
-  var BUILD = 'kb-fix-3';        // видно в ?debug=1 — проверить, что телефон взял свежую версию
+  var BUILD = 'kb-fix-4';        // видно в ?debug=1 — проверить, что телефон взял свежую версию
   var restH = 0;                 // высота экрана без клавиатуры
   var lastKbRule = null;         // последнее записанное правило
 
@@ -334,7 +334,15 @@
     var vv = window.visualViewport;
     var visH = Math.round((vv && vv.height) || window.innerHeight || 0);
 
-    if (!typing()) {
+    /* Фокуса мало: при отправке поле теряет фокус ЗА мгновение до того, как
+       клавиатура успевает закрыться. В этот момент typing() уже false, а высота
+       ещё урезана — и мы бы записали её в --app-h, отчего экран схлопывался
+       на долю секунды. Поэтому дополнительно смотрим на величину просадки:
+       клавиатура занимает ~35–45 % экрана, а сворачивание адресной строки
+       Safari — от силы 10 %. Всё, что глубже 20 %, считаем клавиатурой. */
+    var kbLikely = restH > 0 && visH < restH * 0.8;
+
+    if (!typing() && !kbLikely) {
       if (visH > 0) {
         restH = visH;
         root.style.setProperty('--app-h', visH + 'px');
@@ -354,7 +362,7 @@
   layout();
   addEventListener('resize', layout);
   addEventListener('scroll', layout, { passive: true });
-  addEventListener('orientationchange', function () { setTimeout(layout, 300); });
+  addEventListener('orientationchange', function () { restH = 0; setTimeout(layout, 300); });
   addEventListener('pageshow', layout);
   if (window.visualViewport) {
     visualViewport.addEventListener('resize', layout);
@@ -386,6 +394,7 @@
         '\nkb      ' + Math.max(0, restH - visH) +
         '\napp-h   ' + (root.style.getPropertyValue('--app-h') || '-') +
         '\ntyping  ' + typing() +
+        '\nkbLikely ' + (restH > 0 && visH < restH * 0.8) +
         '\nmotion  ' + (window.__motion ? window.__motion.state : 'нет') +
         '\nscrollY ' + Math.round(window.pageYOffset);
     }, 200);
